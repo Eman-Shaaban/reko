@@ -1,0 +1,24 @@
+{
+  "name": "reko",
+  "version": "1.0.0",
+  "description": "Image Recognizer",
+  "main": "index.js",
+  "repository": "https://github.com/Eman-Shaaban/reko",
+  "author": "Eman Shaaban",
+  "license": "MIT",
+  "scripts": {
+    "lint": "standard -v",
+    "fix-lint": "standard --fix"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1023.0",
+    "axios": "^0.24.0",
+    "lodash": "^4.17.21",
+    "serverless-dotenv-plugin": "^3.10.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "serverless-offline": "^8.2.0",
+    "standard": "^16.0.4"
+  }
+}

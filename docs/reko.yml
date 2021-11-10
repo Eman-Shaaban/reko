@@ -1,0 +1,108 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Reko API
+servers:
+  - url: http://localhost:3000/
+paths:
+  /blobs:
+    post:
+      summary: create new blob and generate upload url
+      operationId: getUploadUrl
+      tags:
+        - blobs
+      parameters:
+        - name: callback_url
+          in: body
+          description: 
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: upload url
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Response"
+        default:
+          description: Error generating upload url
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+  /blobs/{blobId}:
+    get:
+      summary: Info for a specific blob
+      operationId: getBlobInfoById
+      tags:
+        - blobs
+      parameters:
+        - name: blobId
+          in: path
+          required: true
+          description: The id of the blob to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blob"
+        '400':
+          description: Invalid request 
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"   
+        '404':
+          description: blob not found 
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"     
+        default:
+          description: error getting blob
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"                 
+components:
+  schemas:
+    Blob:
+      type: object
+      required:
+        - blobId
+      properties:
+        blobId:
+          type: string
+          format: uuid
+        callback_url:
+          type: string
+        labels:
+          type: array
+          items:
+            type: object
+            properties:
+              Name:
+                type: string
+              Confidence:
+                type: number  
+    Response:
+      type: object
+      required:
+        - statusCode
+        - success
+        - message
+      properties:
+        statusCode:
+          type: integer
+          format: int32
+        success:
+          type: boolean  
+        message:
+          type: string
+        url:
+          type: string          

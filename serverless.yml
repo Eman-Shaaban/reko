@@ -1,0 +1,94 @@
+service: Reko
+frameworkVersion: "2"
+
+provider:
+  name: aws
+  stage: dev
+  region: us-east-1
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+
+  # you can add statements to the Lambda function's IAM Role here
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:GetObject
+      Resource: { Fn::Join: ["", [{ Fn::GetAtt: [S3Bucket, Arn] }, "/*"]] }
+
+    - Effect: Allow
+      Action:
+        - rekognition:DetectLabels
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource:
+        - "Fn::GetAtt": [BlobsTable, Arn]
+
+functions:
+  createBlob:
+    handler: handler.getUploadUrl
+    events:
+      - httpApi:
+          path: /blobs
+          method: post
+
+  processBlob:
+    handler: handler.detectImageLabels
+    events:
+      - s3:
+          bucket: ${env:BUCKET_NAME}
+          event: s3:ObjectCreated:Put
+          existing: true
+
+  getBlobInfo:
+    handler: handler.getBlobInfoById
+    events:
+      - httpApi:
+          path: /blobs/{id}
+          method: get
+
+  makeCallback:
+    handler: handler.sendBlobInfo
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt: [BlobsTable, StreamArn]
+
+# you can add CloudFormation resource templates here
+resources:
+  Resources:
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${env:BUCKET_NAME}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ["*"]
+              AllowedMethods: [PUT]
+              AllowedOrigins: ["*"]
+    BlobsTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${env:DYNAMODB_TABLE}
+        AttributeDefinitions:
+          - AttributeName: blobId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: blobId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
