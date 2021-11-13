@@ -13,7 +13,11 @@ const { createBlob, updateBlob, readBlob } = require('./crud')
 
 module.exports.getUploadUrl = async (event) => {
   try {
-    const requestBody = JSON.parse(event.body)
+    let requestBody
+    if (!_.isEmpty(event.body)) {
+      requestBody = JSON.parse(event.body)
+    }
+
     const callbackUrl = requestBody?.callback_url
     const blobId = uuidv4()
     const blob = await createBlob(blobId, callbackUrl)
@@ -40,7 +44,8 @@ module.exports.getUploadUrl = async (event) => {
       body: JSON.stringify({
         success: true,
         message: 'Upload url generated successfully.',
-        url
+        url,
+        blob_id: blobId
       })
     }
   } catch (err) {
@@ -126,7 +131,8 @@ module.exports.getBlobInfoById = async (event) => {
 }
 
 module.exports.sendBlobInfo = async (event) => {
-  event.Records.forEach((record) => {
+  const records = event.Records
+  for (const record of records) {
     if (record.eventName === 'MODIFY') {
       const callbackUrl = record.dynamodb.NewImage.callback_url.S
 
@@ -140,12 +146,12 @@ module.exports.sendBlobInfo = async (event) => {
         })
 
         // send labels to the callback url
-        axios.post(callbackUrl,
+        await axios.post(callbackUrl,
           message,
           {
             headers: { 'content-type': 'application/json' }
           })
       }
     }
-  })
+  }
 }
