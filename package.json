@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1023.0",
-    "axios": "^0.24.0",
+    "axios": "^1.12.2",
     "lodash": "^4.17.21",
     "serverless-dotenv-plugin": "^3.10.0",
     "uuid": "^8.3.2"
